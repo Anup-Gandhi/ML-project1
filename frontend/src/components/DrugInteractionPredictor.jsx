@@ -5,18 +5,26 @@ export default function DrugInteractionPredictor() {
   const [id2, setId2] = useState("");
   const [prediction, setPrediction] = useState(null);
   const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const isValidDrugBankID = (id) => /^DB\d{5}$/.test(id);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
     setPrediction(null);
+    setLoading(true);
+
+    if (!isValidDrugBankID(id1) || !isValidDrugBankID(id2)) {
+      setError("Invalid DrugBank ID format (should be DBXXXXX).");
+      setLoading(false);
+      return;
+    }
 
     try {
-      const response = await fetch("http://localhost/backend/predict.php", {
+      const response = await fetch("http://localhost:8000/predict.php", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id1, id2 }),
       });
 
@@ -28,6 +36,8 @@ export default function DrugInteractionPredictor() {
       }
     } catch (err) {
       setError("Failed to fetch prediction");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -55,6 +65,7 @@ export default function DrugInteractionPredictor() {
           Predict
         </button>
       </form>
+      {loading && <p className="text-blue-500 text-center">Loading...</p>}
       {error && <p className="text-red-500 text-center">{error}</p>}
       {prediction !== null && <p className="text-green-500 text-center">Prediction: {prediction}</p>}
     </div>
